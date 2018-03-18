@@ -1,6 +1,6 @@
 
 
-##Prediction Assignment
+## Prediction Assignment
 
 This is the final course project for Practical Machine Learning at Coursera.
 The project is about HAR - Human Activity Recognition , using different wearable accelerometers like  Jawbone Up, Nike FuelBand, and Fitbit. 
@@ -8,60 +8,73 @@ Few test subjects are made to perform some exercises in correct and incorrect ma
 Based on the train dataset generated, we need to predict the test cases.
 The Aim of the project is to predict the “classe” variable for test subjects who performed some exercises.
 
-##Data Sources
+## Data Sources
 The training data for this project are available here:  https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
 The test data are available here:  https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
 The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. 
 
-##Code and Logic for Prediction
+## Code and Logic for Prediction
 Loading the Data
 setwd("C:/R/data/coursera/Machine_learning")
 library(caret)
-#Load the dataset
+
+# Load the dataset
 training <- read.csv("pml-training.csv",na.strings = "NA")
 testing  <- read.csv("pml-testing.csv",na.strings = "NA")
 
-##Cleaning the Data
+## Cleaning the Data
 After loading the data , it needs to be examined and cleaned. Looking at the structure of the data shows many columns containing mostly “NA” values.  Also columns with near zero variance also need to be removed.
 At each  cleansing step I used the str function to look at the data.
-#Cleaning Data and reducing predictors
-#Look at the data structure
+
+# Cleaning Data and reducing predictors
+# Look at the data structure
+
 str(training)
 
-#Remove the columns that are mostly NA
+# Remove the columns that are mostly NA
+
 AllNA    <- sapply(training, function(x) mean(is.na(x))) > 0.95
 training <- training[, AllNA==FALSE]
 testing  <- testing[, AllNA==FALSE]
 #Look at the data structure
 str(training)
-#Now the datasets have 93 variables 
+# Now the datasets have 93 variables 
 #Remove columns with near zero variance
 NonVar <- nearZeroVar(training,saveMetrics=TRUE)
 training <- training[,!NonVar$nzv]
 testing <- testing[,!NonVar$nzv]
-#Look at the data structure
+# Look at the data structure
 str(training)
-#Now the datasets have 59 variables 
-#Remove names & other variables not associated with prediction
+# Now the datasets have 59 variables 
+# Remove names & other variables not associated with prediction
+
 colRm_train <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2","cvtd_timestamp","num_window")
 colRm_test <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2","cvtd_timestamp","num_window","problem_id")
 training <- training[,!(names(training) %in% colRm_train)]
 testing <- testing[,!(names(testing) %in% colRm_test)]
-#Now the datasets have 52 variables 
+
+# Now the datasets have 52 variables 
+
 The training dataset is divided into 2 parts, training and validation, to verify the accuracy of the prediction model.
-#Partition Training set into train and validation
+
+# Partition Training set into train and validation
 inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
 training_clean <- training[inTrain,]
 validation_clean <- training[-inTrain,]
 Multiple machine learning algorithms will be used , and the one with the best accuracy will be used on the test dataset.
 
-##Algorithm 1: Random Forest
+## Algorithm 1: Random Forest
 
-#Fit Random forest 
+# Fit Random forest 
+
 set.seed(1414)
+
 rfFit <- train(classe ~ ., method = "rf", data = training_clean, importance = T, trControl = trainControl(method = "cv", number = 4))
+
 validation_pred <- predict(rfFit, newdata=validation_clean)
+
 # Check model performance
+
 confusionMatrix(validation_pred,validation_clean$classe)
 #Random Forest prediction statistics
 Confusion Matrix and Statistics
@@ -96,16 +109,19 @@ Detection Prevalence   0.2865   0.1925   0.1762   0.1604   0.1844
 Balanced Accuracy      0.9986   0.9941   0.9947   0.9890   0.9997
 
 
-##Algorithm 2: Boosted Model
-#Fit Boosted Model
+## Algorithm 2: Boosted Model
+# Fit Boosted Model
+
 set.seed(1414)
 controlGBM <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
 modFitGBM  <- train(classe ~ ., data=training_clean, method = "gbm",
                     trControl = controlGBM, verbose = FALSE)
 predictGBM <- predict(modFitGBM, newdata=validation_clean)
+
 # Check model performance
 confusionMatrix(predictGBM, validation_clean$classe)
-#Boosted Model prediction Statistics
+
+# Boosted Model prediction Statistics
 Confusion Matrix and Statistics
   Reference
 Prediction    
@@ -139,9 +155,9 @@ Detection Prevalence   0.2872   0.1946   0.1771   0.1614   0.1798
 Balanced Accuracy      0.9872   0.9645   0.9683   0.9766   0.9844
 
 
-##Algorithm 3: LDA Model
+## Algorithm 3: LDA Model
 
-#Fit lda Model
+# Fit lda Model
 set.seed(1414)
 controlLDA <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
 modFitLDA  <- train(classe ~ ., data=training_clean, method = "lda",
@@ -181,12 +197,13 @@ Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
 Detection Rate         0.2287   0.1246   0.1195   0.1223   0.1144
 Detection Prevalence   0.2884   0.1879   0.2039   0.1844   0.1354
 Balanced Accuracy      0.8604   0.7825   0.7915   0.8364   0.7981
-Comparison of the 3 outputs
+
+# Comparison of the 3 outputs
 Random Forest Accuracy : 0.9932          
 Boost Model Accuracy : 0.9638
 LDA Model Accuracy : 0.7094    
 
-##Random Forest is chosen to predict the test set results
-#actual Prediction
+## Random Forest is chosen to predict the test set results
+# actual Prediction
 predictTEST <- predict(rfFit, newdata=testing)
 predictTEST     
