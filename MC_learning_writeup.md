@@ -15,11 +15,15 @@ The data for this project come from this source: http://web.archive.org/web/2016
 
 ## Code and Logic for Prediction
 Loading the Data
+
 setwd("C:/R/data/coursera/Machine_learning")
+
 library(caret)
 
 # Load the dataset
+
 training <- read.csv("pml-training.csv",na.strings = "NA")
+
 testing  <- read.csv("pml-testing.csv",na.strings = "NA")
 
 ## Cleaning the Data
@@ -34,23 +38,33 @@ str(training)
 # Remove the columns that are mostly NA
 
 AllNA    <- sapply(training, function(x) mean(is.na(x))) > 0.95
+
 training <- training[, AllNA==FALSE]
+
 testing  <- testing[, AllNA==FALSE]
+
 #Look at the data structure
 str(training)
 # Now the datasets have 93 variables 
 #Remove columns with near zero variance
+
 NonVar <- nearZeroVar(training,saveMetrics=TRUE)
+
 training <- training[,!NonVar$nzv]
+
 testing <- testing[,!NonVar$nzv]
+
 # Look at the data structure
 str(training)
 # Now the datasets have 59 variables 
 # Remove names & other variables not associated with prediction
 
 colRm_train <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2","cvtd_timestamp","num_window")
+
 colRm_test <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2","cvtd_timestamp","num_window","problem_id")
+
 training <- training[,!(names(training) %in% colRm_train)]
+
 testing <- testing[,!(names(testing) %in% colRm_test)]
 
 # Now the datasets have 52 variables 
@@ -58,9 +72,13 @@ testing <- testing[,!(names(testing) %in% colRm_test)]
 The training dataset is divided into 2 parts, training and validation, to verify the accuracy of the prediction model.
 
 # Partition Training set into train and validation
+
 inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
+
 training_clean <- training[inTrain,]
+
 validation_clean <- training[-inTrain,]
+
 Multiple machine learning algorithms will be used , and the one with the best accuracy will be used on the test dataset.
 
 ## Algorithm 1: Random Forest
@@ -77,35 +95,49 @@ validation_pred <- predict(rfFit, newdata=validation_clean)
 
 confusionMatrix(validation_pred,validation_clean$classe)
 #Random Forest prediction statistics
+
 Confusion Matrix and Statistics
           Reference
+
 Prediction    A    B    C    D    E
-         A 1674   12    0    0    0
-         B    0 1127    6    0    0
-         C    0    0 1019   18    0
-         D    0    0    1  943    0
-         E    0    0    0    3 1082
+         
+           A 1674   12    0    0    0
+           B    0 1127    6    0    0
+           C    0    0 1019   18    0
+           D    0    0    1  943    0
+           E    0    0    0    3 1082
 
 Overall Statistics
                                           
    Accuracy : 0.9932          
+   
    95% CI : (0.9908, 0.9951)
-    No Information Rate : 0.2845          
-    P-Value [Acc > NIR] : < 2.2e-16       
+   
+   No Information Rate : 0.2845          
+    
+   P-Value [Acc > NIR] : < 2.2e-16       
                                           
                   Kappa : 0.9914          
- Mcnemar's Test P-Value : NA              
+ 
+Mcnemar's Test P-Value : NA              
 
 Statistics by Class:
 
                      Class: A Class: B Class: C Class: D Class: E
 Sensitivity            1.0000   0.9895   0.9932   0.9782   1.0000
+
 Specificity            0.9972   0.9987   0.9963   0.9998   0.9994
+
 Pos Pred Value         0.9929   0.9947   0.9826   0.9989   0.9972
+
 Neg Pred Value         1.0000   0.9975   0.9986   0.9957   1.0000
+
 Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
+
 Detection Rate         0.2845   0.1915   0.1732   0.1602   0.1839
+
 Detection Prevalence   0.2865   0.1925   0.1762   0.1604   0.1844
+
 Balanced Accuracy      0.9986   0.9941   0.9947   0.9890   0.9997
 
 
@@ -198,7 +230,7 @@ Detection Rate         0.2287   0.1246   0.1195   0.1223   0.1144
 Detection Prevalence   0.2884   0.1879   0.2039   0.1844   0.1354
 Balanced Accuracy      0.8604   0.7825   0.7915   0.8364   0.7981
 
-# Comparison of the 3 outputs
+#  	Comparison of the 3 outputs
 Random Forest Accuracy : 0.9932          
 Boost Model Accuracy : 0.9638
 LDA Model Accuracy : 0.7094    
